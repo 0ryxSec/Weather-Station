@@ -4,10 +4,10 @@ import time
 import csv
 import os
 
-# Initialize Sense HAT
+# Initialize SenseHAT
 sense = SenseHat()
 
-# Path to your sensor data log file
+# Path to sensor data log file
 log_file_path = os.path.expanduser('~/weather/sensor_data_log.csv')
 
 # Create the log file if it doesn't exist and write the header
@@ -27,6 +27,23 @@ def get_trend_color(recent_readings):
         return (0, 0, 255)  # Blue for falling temperature
     else:
         return (0, 255, 0)  # Green for stable temperature
+
+# Function to set the LED rotation based on orientation
+def set_led_rotation():
+    orientation = sense.get_orientation_degrees()
+    pitch = orientation['pitch']
+    roll = orientation['roll']
+    
+    if 45 <= pitch <= 135:
+        sense.set_rotation(180)
+    elif 225 <= pitch <= 315:
+        sense.set_rotation(0)
+    elif 45 <= roll <= 135:
+        sense.set_rotation(270)
+    elif 225 <= roll <= 315:
+        sense.set_rotation(90)
+    else:
+        sense.set_rotation(0)
 
 # Initialize a list to store temperature readings for the last minute
 minute_readings = []
@@ -60,6 +77,9 @@ while True:
 
         # Light up the Sense HAT with the trend color
         sense.clear(trend_color)
+
+        # Set the LED rotation based on orientation
+        set_led_rotation()
 
         # Display the average temperature on the Sense HAT LED matrix
         sense.show_message(f"{avg_temp:.1f}C", text_colour=[255, 255, 255], back_colour=trend_color)
