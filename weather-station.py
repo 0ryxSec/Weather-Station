@@ -1,13 +1,16 @@
+# v0.3 07/08/2024
+
+
 from sense_hat import SenseHat
 from datetime import datetime
 import time
 import csv
 import os
 
-# Initialize SenseHAT
+# Initialize Sense HAT
 sense = SenseHat()
 
-# Path to sensor data log file
+# Path to your sensor data log file
 log_file_path = os.path.expanduser('~/weather/sensor_data_log.csv')
 
 # Create the log file if it doesn't exist and write the header
@@ -28,20 +31,18 @@ def get_trend_color(recent_readings):
     else:
         return (0, 255, 0)  # Green for stable temperature
 
-# Function to set the LED rotation based on orientation
+# Function to set the LED rotation based on gyroscope data
 def set_led_rotation():
     orientation = sense.get_orientation_degrees()
     pitch = orientation['pitch']
     roll = orientation['roll']
-    
-    if 45 <= pitch <= 135:
-        sense.set_rotation(180)
-    elif 225 <= pitch <= 315:
-        sense.set_rotation(0)
-    elif 45 <= roll <= 135:
-        sense.set_rotation(270)
-    elif 225 <= roll <= 315:
+
+    if 45 <= pitch < 135:
         sense.set_rotation(90)
+    elif 135 <= pitch < 225:
+        sense.set_rotation(180)
+    elif 225 <= pitch < 315:
+        sense.set_rotation(270)
     else:
         sense.set_rotation(0)
 
@@ -49,11 +50,11 @@ def set_led_rotation():
 minute_readings = []
 
 while True:
-    # Get current timestamp and sensor data
-    current_time = datetime.now()
-    current_temp = sense.get_temperature()
-    current_humidity = sense.get_humidity()
-    current_pressure = sense.get_pressure()
+    # Get current timestamp and sensor data, this is rounded to 2 decimal places
+    current_time = datetime.now().replace(microsecond=0)
+    current_temp = round(sense.get_temperature(), 2)
+    current_humidity = round(sense.get_humidity(), 2)
+    current_pressure = round(sense.get_pressure(), 2)
 
     # Add the current temperature reading to the minute_readings list
     minute_readings.append(current_temp)
@@ -72,17 +73,17 @@ while True:
 
     # Every minute, calculate the average temperature and determine the trend
     if len(minute_readings) == 60:
-        avg_temp = sum(minute_readings) / len(minute_readings)
+        avg_temp = round(sum(minute_readings) / len(minute_readings), 2)
         trend_color = get_trend_color(minute_readings)
 
         # Light up the Sense HAT with the trend color
         sense.clear(trend_color)
 
-        # Set the LED rotation based on orientation
+        # Set the LED rotation based on gyroscope data
         set_led_rotation()
 
-        # Display the average temperature on the Sense HAT LED matrix
-        sense.show_message(f"{avg_temp:.1f}C", text_colour=[255, 255, 255], back_colour=trend_color)
+        # Display the average temperature on the Sense HAT LED
+        sense.show_message(f"{avg_temp:.2f}C", text_colour=[255, 255, 255], back_colour=trend_color)
 
     # Wait for a second before taking the next reading
     time.sleep(1)
